@@ -19,7 +19,8 @@ namespace SF2022User_NN_Lib
         /// <returns></returns>
         public static string[] AvailablePeriods(TimeSpan[] startTimes, int[] durations, TimeSpan beginWorkingTime, TimeSpan endWorkingTime, int consultationTime)
         {
-            string[] listFreePeriods = new string[0];
+            string[] periods = new string[0];
+            TimeSpan[] listFreePeriods = new TimeSpan[0];
             TimeSpan time = beginWorkingTime;
             TimeSpan gap = new TimeSpan(0, consultationTime, 0);
             while(time < endWorkingTime)
@@ -31,17 +32,22 @@ namespace SF2022User_NN_Lib
                     if (timeSpanEnd > beginWorkingTime)
                     {
                         Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
-                        listFreePeriods[listFreePeriods.Length - 1] = "" + timeSpan.Add(-gap).ToString() + " - " + timeSpan.ToString();
+                        listFreePeriods[listFreePeriods.Length - 1] = timeSpan.Add(-gap);
                     }
                 }
                 else
                 {
                     Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
-                    listFreePeriods[listFreePeriods.Length - 1] = "" + time.ToString() + " - " + time.Add(gap).ToString();
+                    listFreePeriods[listFreePeriods.Length - 1] =time;
                 }
                 time = time.Add(gap);
             }
-            return listFreePeriods;
+            foreach(TimeSpan time1 in listFreePeriods)
+            {
+                Array.Resize(ref periods, periods.Length + 1);
+                periods[periods.Length - 1] = "" + time1 + " - " + time1.Add(gap);
+            }
+            return periods;
         }
 
         public static TimeSpan getProverkaPeriod(TimeSpan timeStart, TimeSpan timeEnd, TimeSpan[] startTimes, int[] durations)
