@@ -20,52 +20,91 @@ namespace SF2022User_NN_Lib
         public static string[] AvailablePeriods(TimeSpan[] startTimes, int[] durations, TimeSpan beginWorkingTime, TimeSpan endWorkingTime, int consultationTime)
         {
             string[] periods = new string[0];
-            TimeSpan[] listFreePeriods = new TimeSpan[0];
-            TimeSpan time = beginWorkingTime;
-            TimeSpan gap = new TimeSpan(0, consultationTime, 0);
-            while(time < endWorkingTime)
+            TimeSpan[] listFreePeriods = new TimeSpan[0]; // Массив свободных периодов с указанием даты начала
+            TimeSpan time = beginWorkingTime; // Время, которое изменяется
+            TimeSpan gap = new TimeSpan(0, consultationTime, 0); // Минимальное необходимое время для работы менеджера
+            while (time < endWorkingTime) // Пока время не достигло конца рабочего дня
             {
-                TimeSpan timeSpan = getProverkaPeriod(time, time.Add(gap), startTimes, durations);
-                if (timeSpan != new TimeSpan())
+                int Index = getProverkaPeriod(time, time.Add(gap), startTimes, durations); // индекс элемента ближайшего времеми, которое занято если оно входит в предпологаемый занимаемый период
+                if (Index != -1) // Если есть время, которое входит в занимаемый период
                 {
-                    TimeSpan timeSpanEnd = timeSpan.Add(-gap);
-                    if (timeSpanEnd > beginWorkingTime)
+                    TimeSpan timeSpanStart = startTimes[Index].Add(-gap); // Время начала, которое необходимо, чтобы не перекрыть занятое время
+                    if (!getProverkaFreeTime(timeSpanStart, listFreePeriods, gap)) // Если время ещё не записано в список
                     {
-                        Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
-                        listFreePeriods[listFreePeriods.Length - 1] = timeSpan.Add(-gap);
+                        if(getProverkaPeriod(timeSpanStart, timeSpanStart.Add(gap), startTimes, durations) == -1) // Если время не занято
+                        {
+                            Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
+                            listFreePeriods[listFreePeriods.Length - 1] = startTimes[Index].Add(-gap);
+                        }
                     }
+                    time = startTimes[Index].Add(new TimeSpan(0, durations[Index], 0));
                 }
                 else
                 {
                     Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
-                    listFreePeriods[listFreePeriods.Length - 1] =time;
+                    listFreePeriods[listFreePeriods.Length - 1] = time;
+                    time = time.Add(gap);
                 }
-                time = time.Add(gap);
             }
-            foreach(TimeSpan time1 in listFreePeriods)
+            foreach(TimeSpan time1 in listFreePeriods) // Перемещение из типа TimeSpan[] в string[] с необходимым форматом
             {
                 Array.Resize(ref periods, periods.Length + 1);
-                periods[periods.Length - 1] = "" + time1 + " - " + time1.Add(gap);
+                periods[periods.Length - 1] = "" + time1.ToString(@"hh\:mm") + "-" + time1.Add(gap).ToString(@"hh\:mm");
             }
             return periods;
         }
 
-        public static TimeSpan getProverkaPeriod(TimeSpan timeStart, TimeSpan timeEnd, TimeSpan[] startTimes, int[] durations)
+        /// <summary>
+        /// // Проверка, что время сеанса не занимает периоды занятых промежутков
+        /// </summary>
+        /// <param name="timeStart"></param>
+        /// <param name="timeEnd"></param>
+        /// <param name="startTimes"></param>
+        /// <param name="durations"></param>
+        /// <returns></returns>
+        public static int getProverkaPeriod(TimeSpan timeStart, TimeSpan timeEnd, TimeSpan[] startTimes, int[] durations)
         {
-            for(int i = 0; i < startTimes.Length; i++)
+            for(int i = 0; i < startTimes.Length; i++) // Цикл по всем занятым промежуткам
             {
-                TimeSpan startSession = startTimes[i];
-                TimeSpan timeAdd = new TimeSpan(0, durations[i], 0);
-                TimeSpan endSession = startTimes[i].Add(timeAdd);
-                if(timeStart < startSession.Add(new TimeSpan(0, 0, 1)))
+                if(startTimes[i] >= timeStart) 
                 {
-                    if(timeEnd >= endSession.Add(new TimeSpan(0, 0, 1)))
+                    if(startTimes[i] < timeEnd)
                     {
-                        return startSession;
+                        return i; // Если время начала занятого промежутка входит в время занимаемого
+                    }
+                }
+                else 
+                {
+                    TimeSpan timeAdd = new TimeSpan(0, durations[i], 0);
+                    if (startTimes[i].Add(timeAdd) > timeStart) // Если время начала занимаемого промежутка входит в время занятого
+                    {
+                        return i;
                     }
                 }
             }
-            return new TimeSpan();
+            return -1;
+        }
+
+        /// <summary>
+        /// Проверка на то, что такое время уже занято в выходном списке
+        /// </summary>
+        /// <param name="time"></param>
+        /// <param name="startTimes"></param>
+        /// <param name="gap"></param>
+        /// <returns></returns>
+        public static bool getProverkaFreeTime(TimeSpan time, TimeSpan[] startTimes, TimeSpan gap)
+        {
+            for (int i = 0; i < startTimes.Length; i++) // Цикл по всем выходным промежуткам
+            {
+                if (startTimes[i] <= time)
+                {
+                    if (startTimes[i].Add(gap) > time)
+                    {
+                        return true; // Если время занято
+                    }
+                }
+            }
+            return false;
         }
     }
 }
