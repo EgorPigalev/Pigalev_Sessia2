@@ -25,9 +25,20 @@ namespace SF2022User_NN_Lib
                 {
                     return null;
                 }
+                foreach(int duration in durations)
+                {
+                    if (duration <= 0) // Если время в продолжительности занятых сеансов указано некоректно
+                    {
+                        return null;
+                    }
+                }
                 if(endWorkingTime < beginWorkingTime) // Если время начала больше чем время конца, то это время окончания другого дня
                 {
                     endWorkingTime = endWorkingTime.Add(new TimeSpan(1, 0, 0, 0));
+                }
+                if (consultationTime <= 0) // Если время указано некоректно
+                {
+                    return null;
                 }
                 string[] periods = new string[0];
                 TimeSpan[] listFreePeriods = new TimeSpan[0]; // Массив свободных периодов с указанием даты начала
@@ -43,16 +54,22 @@ namespace SF2022User_NN_Lib
                         {
                             if (getProverkaPeriod(timeSpanStart, timeSpanStart.Add(gap), startTimes, durations) == -1) // Если время не занято
                             {
-                                Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
-                                listFreePeriods[listFreePeriods.Length - 1] = startTimes[Index].Add(-gap);
+                                if(timeSpanStart > beginWorkingTime && timeSpanStart.Add(gap) < endWorkingTime)
+                                {
+                                    Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
+                                    listFreePeriods[listFreePeriods.Length - 1] = startTimes[Index].Add(-gap);
+                                }
                             }
                         }
                         time = startTimes[Index].Add(new TimeSpan(0, durations[Index], 0));
                     }
                     else
                     {
-                        Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
-                        listFreePeriods[listFreePeriods.Length - 1] = time;
+                        if(time >= beginWorkingTime && time.Add(gap) <= endWorkingTime)
+                        {
+                            Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
+                            listFreePeriods[listFreePeriods.Length - 1] = time;
+                        }
                         time = time.Add(gap);
                     }
                 }
@@ -77,7 +94,7 @@ namespace SF2022User_NN_Lib
         /// <param name="startTimes"></param>
         /// <param name="durations"></param>
         /// <returns></returns>
-        public static int getProverkaPeriod(TimeSpan timeStart, TimeSpan timeEnd, TimeSpan[] startTimes, int[] durations)
+        private static int getProverkaPeriod(TimeSpan timeStart, TimeSpan timeEnd, TimeSpan[] startTimes, int[] durations)
         {
             for(int i = 0; i < startTimes.Length; i++) // Цикл по всем занятым промежуткам
             {
@@ -107,7 +124,7 @@ namespace SF2022User_NN_Lib
         /// <param name="startTimes"></param>
         /// <param name="gap"></param>
         /// <returns></returns>
-        public static bool getProverkaFreeTime(TimeSpan time, TimeSpan[] startTimes, TimeSpan gap)
+        private static bool getProverkaFreeTime(TimeSpan time, TimeSpan[] startTimes, TimeSpan gap)
         {
             for (int i = 0; i < startTimes.Length; i++) // Цикл по всем выходным промежуткам
             {

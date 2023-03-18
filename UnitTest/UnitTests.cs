@@ -84,7 +84,7 @@ namespace UnitTest
         }
 
         [TestMethod]
-        public void AvailablePeriods_() // Проверка, корректности работы если время работы дня сотрудника переходит с одного дня на другой
+        public void AvailablePeriods_TwoDays() // Проверка, корректности работы если время работы дня сотрудника переходит с одного дня на другой
         {
             string[] expected = new string[4];
             expected[0] = "23:00-23:30";
@@ -95,6 +95,117 @@ namespace UnitTest
             int[] durations = new int[0];
             TimeSpan beginWorkingTime = new TimeSpan(23, 0, 0);
             TimeSpan endWorkingTime = new TimeSpan(1, 0, 0);
+            int consultationTime = 30;
+            string[] actual = Calculations.AvailablePeriods(startTimes, durations, beginWorkingTime, endWorkingTime, consultationTime);
+            CollectionAssert.AreEqual(actual, expected);
+        }
+
+        [TestMethod]
+        public void AvailablePeriods_ConsultationTimeBig() // Проверка, при большом минимальном необходимом времени
+        {
+            string[] expected = new string[1];
+            expected[0] = "11:30-14:00";
+            TimeSpan[] startTimes = new TimeSpan[2];
+            int[] durations = new int[2];
+            startTimes[0] = new TimeSpan(10, 00, 0);
+            durations[0] = 60;
+            startTimes[1] = new TimeSpan(11, 0, 0);
+            durations[1] = 30;
+            TimeSpan beginWorkingTime = new TimeSpan(8, 0, 0);
+            TimeSpan endWorkingTime = new TimeSpan(14, 0, 0);
+            int consultationTime = 150;
+            string[] actual = Calculations.AvailablePeriods(startTimes, durations, beginWorkingTime, endWorkingTime, consultationTime);
+            CollectionAssert.AreEqual(actual, expected);
+        }
+
+        [TestMethod]
+        public void AvailablePeriods_ConsultationTimeZero() // Проверка, при некоректном минимальном необходимом времени
+        {
+            TimeSpan[] startTimes = new TimeSpan[2];
+            int[] durations = new int[2];
+            startTimes[0] = new TimeSpan(10, 00, 0);
+            durations[0] = 60;
+            startTimes[1] = new TimeSpan(11, 0, 0);
+            durations[1] = 30;
+            TimeSpan beginWorkingTime = new TimeSpan(8, 0, 0);
+            TimeSpan endWorkingTime = new TimeSpan(14, 0, 0);
+            int consultationTime = 0;
+            string[] actual = Calculations.AvailablePeriods(startTimes, durations, beginWorkingTime, endWorkingTime, consultationTime);
+            Assert.IsTrue(actual == null);
+        }
+
+        [TestMethod]
+        public void AvailablePeriods_SmallPeriod() // Проверка, при небольшом интервале рабочего дня сотрудника, когда минимальное необходимое время меньше рабочего дня
+        {
+            string[] expected = new string[0];
+            TimeSpan[] startTimes = new TimeSpan[0];
+            int[] durations = new int[0];
+            TimeSpan beginWorkingTime = new TimeSpan(8, 0, 0);
+            TimeSpan endWorkingTime = new TimeSpan(8, 10, 0);
+            int consultationTime = 20;
+            string[] actual = Calculations.AvailablePeriods(startTimes, durations, beginWorkingTime, endWorkingTime, consultationTime);
+            CollectionAssert.AreEqual(actual, expected);
+        }
+
+        [TestMethod]
+        public void AvailablePeriods_NotCorrectlyDurations() // Проверка, при некоректном времени в продолжительности занятых промежутков времени
+        {
+            TimeSpan[] startTimes = new TimeSpan[2];
+            int[] durations = new int[2];
+            startTimes[0] = new TimeSpan(10, 00, 0);
+            durations[0] = -50;
+            startTimes[1] = new TimeSpan(11, 0, 0);
+            durations[1] = 30;
+            TimeSpan beginWorkingTime = new TimeSpan(8, 0, 0);
+            TimeSpan endWorkingTime = new TimeSpan(14, 0, 0);
+            int consultationTime = 30;
+            string[] actual = Calculations.AvailablePeriods(startTimes, durations, beginWorkingTime, endWorkingTime, consultationTime);
+            Assert.IsFalse(actual != null);
+        }
+
+        [TestMethod]
+        public void AvailablePeriods_CorrectlyType() // Проверка, что метод возвращает данные с коректным типом
+        {
+            TimeSpan[] startTimes = new TimeSpan[5];
+            int[] durations = new int[5];
+            startTimes[0] = new TimeSpan(10, 00, 0);
+            durations[0] = 60;
+            startTimes[1] = new TimeSpan(11, 0, 0);
+            durations[1] = 30;
+            startTimes[2] = new TimeSpan(15, 0, 0);
+            durations[2] = 10;
+            startTimes[3] = new TimeSpan(15, 30, 0);
+            durations[3] = 10;
+            startTimes[4] = new TimeSpan(16, 50, 0);
+            durations[4] = 40;
+            TimeSpan beginWorkingTime = new TimeSpan(8, 0, 0);
+            TimeSpan endWorkingTime = new TimeSpan(18, 0, 0);
+            int consultationTime = 30;
+            string[] actual = Calculations.AvailablePeriods(startTimes, durations, beginWorkingTime, endWorkingTime, consultationTime);
+            Assert.IsInstanceOfType(actual, typeof(string[]));
+        }
+
+        [TestMethod]
+        public void AvailablePeriods_BusyBeginning() // Проверка, что метод возвращает правильный результат если список занятых промежутков времени в самом начале
+        {
+            string[] expected = new string[9];
+            expected[0] = "13:30-14:00";
+            expected[1] = "14:00-14:30";
+            expected[2] = "14:30-15:00";
+            expected[3] = "15:00-15:30";
+            expected[4] = "15:30-16:00";
+            expected[5] = "16:00-16:30";
+            expected[6] = "16:30-17:00";
+            expected[7] = "17:00-17:30";
+            expected[8] = "17:30-18:00";
+            TimeSpan[] startTimes = new TimeSpan[2];
+            int[] durations = new int[2];
+            startTimes[0] = new TimeSpan(12, 30, 0);
+            durations[0] = 60;
+            startTimes[1] = new TimeSpan(13, 0, 0);
+            durations[1] = 30;
+            TimeSpan beginWorkingTime = new TimeSpan(12, 30, 0);
+            TimeSpan endWorkingTime = new TimeSpan(18, 0, 0);
             int consultationTime = 30;
             string[] actual = Calculations.AvailablePeriods(startTimes, durations, beginWorkingTime, endWorkingTime, consultationTime);
             CollectionAssert.AreEqual(actual, expected);
