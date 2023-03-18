@@ -19,39 +19,54 @@ namespace SF2022User_NN_Lib
         /// <returns></returns>
         public static string[] AvailablePeriods(TimeSpan[] startTimes, int[] durations, TimeSpan beginWorkingTime, TimeSpan endWorkingTime, int consultationTime)
         {
-            string[] periods = new string[0];
-            TimeSpan[] listFreePeriods = new TimeSpan[0]; // Массив свободных периодов с указанием даты начала
-            TimeSpan time = beginWorkingTime; // Время, которое изменяется
-            TimeSpan gap = new TimeSpan(0, consultationTime, 0); // Минимальное необходимое время для работы менеджера
-            while (time < endWorkingTime) // Пока время не достигло конца рабочего дня
+            try
             {
-                int Index = getProverkaPeriod(time, time.Add(gap), startTimes, durations); // индекс элемента ближайшего времеми, которое занято если оно входит в предпологаемый занимаемый период
-                if (Index != -1) // Если есть время, которое входит в занимаемый период
+                if(startTimes.Length != durations.Length)
                 {
-                    TimeSpan timeSpanStart = startTimes[Index].Add(-gap); // Время начала, которое необходимо, чтобы не перекрыть занятое время
-                    if (!getProverkaFreeTime(timeSpanStart, listFreePeriods, gap)) // Если время ещё не записано в список
+                    return null;
+                }
+                if(endWorkingTime < beginWorkingTime) // Если время начала больше чем время конца, то это время окончания другого дня
+                {
+                    endWorkingTime = endWorkingTime.Add(new TimeSpan(1, 0, 0, 0));
+                }
+                string[] periods = new string[0];
+                TimeSpan[] listFreePeriods = new TimeSpan[0]; // Массив свободных периодов с указанием даты начала
+                TimeSpan time = beginWorkingTime; // Время, которое изменяется
+                TimeSpan gap = new TimeSpan(0, consultationTime, 0); // Минимальное необходимое время для работы менеджера
+                while (time < endWorkingTime) // Пока время не достигло конца рабочего дня
+                {
+                    int Index = getProverkaPeriod(time, time.Add(gap), startTimes, durations); // индекс элемента ближайшего времеми, которое занято если оно входит в предпологаемый занимаемый период
+                    if (Index != -1) // Если есть время, которое входит в занимаемый период
                     {
-                        if(getProverkaPeriod(timeSpanStart, timeSpanStart.Add(gap), startTimes, durations) == -1) // Если время не занято
+                        TimeSpan timeSpanStart = startTimes[Index].Add(-gap); // Время начала, которое необходимо, чтобы не перекрыть занятое время
+                        if (!getProverkaFreeTime(timeSpanStart, listFreePeriods, gap)) // Если время ещё не записано в список
                         {
-                            Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
-                            listFreePeriods[listFreePeriods.Length - 1] = startTimes[Index].Add(-gap);
+                            if (getProverkaPeriod(timeSpanStart, timeSpanStart.Add(gap), startTimes, durations) == -1) // Если время не занято
+                            {
+                                Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
+                                listFreePeriods[listFreePeriods.Length - 1] = startTimes[Index].Add(-gap);
+                            }
                         }
+                        time = startTimes[Index].Add(new TimeSpan(0, durations[Index], 0));
                     }
-                    time = startTimes[Index].Add(new TimeSpan(0, durations[Index], 0));
+                    else
+                    {
+                        Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
+                        listFreePeriods[listFreePeriods.Length - 1] = time;
+                        time = time.Add(gap);
+                    }
                 }
-                else
+                foreach (TimeSpan time1 in listFreePeriods) // Перемещение из типа TimeSpan[] в string[] с необходимым форматом
                 {
-                    Array.Resize(ref listFreePeriods, listFreePeriods.Length + 1);
-                    listFreePeriods[listFreePeriods.Length - 1] = time;
-                    time = time.Add(gap);
+                    Array.Resize(ref periods, periods.Length + 1);
+                    periods[periods.Length - 1] = "" + time1.ToString(@"hh\:mm") + "-" + time1.Add(gap).ToString(@"hh\:mm");
                 }
+                return periods;
             }
-            foreach(TimeSpan time1 in listFreePeriods) // Перемещение из типа TimeSpan[] в string[] с необходимым форматом
+            catch
             {
-                Array.Resize(ref periods, periods.Length + 1);
-                periods[periods.Length - 1] = "" + time1.ToString(@"hh\:mm") + "-" + time1.Add(gap).ToString(@"hh\:mm");
+                return null;
             }
-            return periods;
         }
 
         /// <summary>

@@ -8,7 +8,7 @@ namespace UnitTest
     public class UnitTests
     {
         [TestMethod]
-        public void AvailablePeriods_Correctly()
+        public void AvailablePeriods_Correctly() // Проверка, что метод определяет корректное значениие
         {
             string[] expected = new string[14];
             expected[0] = "08:00-08:30";
@@ -39,6 +39,62 @@ namespace UnitTest
             durations[4] = 40;
             TimeSpan beginWorkingTime = new TimeSpan(8, 0, 0);
             TimeSpan endWorkingTime = new TimeSpan(18, 0, 0);
+            int consultationTime = 30;
+            string[] actual = Calculations.AvailablePeriods(startTimes, durations, beginWorkingTime, endWorkingTime, consultationTime);
+            CollectionAssert.AreEqual(actual, expected);
+        }
+
+        [TestMethod]
+        public void AvailablePeriods_NotCorrectly() // Проверка, что не корректное значение не является корректным
+        {
+            string[] expected = new string[5];
+            expected[0] = "08:00-08:30";
+            expected[1] = "08:30-09:00";
+            expected[2] = "09:00-09:30";
+            expected[3] = "09:30-10:00";
+            expected[2] = "10:00-10:30";
+            expected[3] = "10:30-11:00";
+            expected[3] = "11:00-11:30";
+            expected[4] = "11:30-12:00";
+            TimeSpan[] startTimes = new TimeSpan[2];
+            int[] durations = new int[2];
+            startTimes[0] = new TimeSpan(9, 00, 0);
+            durations[0] = 30;
+            startTimes[1] = new TimeSpan(9, 30, 0);
+            durations[1] = 30;
+            TimeSpan beginWorkingTime = new TimeSpan(8, 0, 0);
+            TimeSpan endWorkingTime = new TimeSpan(12, 0, 0);
+            int consultationTime = 30;
+            string[] actual = Calculations.AvailablePeriods(startTimes, durations, beginWorkingTime, endWorkingTime, consultationTime);
+            CollectionAssert.AreNotEqual(actual, expected);
+        }
+
+        [TestMethod]
+        public void AvailablePeriods_NullStartTimesAndNotNullDurations() // Проверка, что если передаются неккоректные данные о занятых промежутков времени, то метод возвращает null
+        {
+            TimeSpan[] startTimes = new TimeSpan[0];
+            int[] durations = new int[2];
+            durations[0] = 30;
+            durations[1] = 50;
+            TimeSpan beginWorkingTime = new TimeSpan(8, 0, 0);
+            TimeSpan endWorkingTime = new TimeSpan(12, 0, 0);
+            int consultationTime = 30;
+            string[] actual = Calculations.AvailablePeriods(startTimes, durations, beginWorkingTime, endWorkingTime, consultationTime);
+            Assert.IsNull(actual);
+        }
+
+        [TestMethod]
+        public void AvailablePeriods_() // Проверка, корректности работы если время работы дня сотрудника переходит с одного дня на другой
+        {
+            string[] expected = new string[4];
+            expected[0] = "23:00-23:30";
+            expected[1] = "23:30-00:00";
+            expected[2] = "00:00-00:30";
+            expected[3] = "00:30-01:00";
+            TimeSpan[] startTimes = new TimeSpan[0];
+            int[] durations = new int[0];
+            TimeSpan beginWorkingTime = new TimeSpan(23, 0, 0);
+            TimeSpan endWorkingTime = new TimeSpan(1, 0, 0);
             int consultationTime = 30;
             string[] actual = Calculations.AvailablePeriods(startTimes, durations, beginWorkingTime, endWorkingTime, consultationTime);
             CollectionAssert.AreEqual(actual, expected);
