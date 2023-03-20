@@ -7,6 +7,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SF2022User{NN}Lib", "SF2022
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "UnitTest\UnitTest.csproj", "{3B562DD7-9565-43DB-9F7B-78629EC8DBE2}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решения", "Элементы решения", "{9E003E3E-1B5D-44AD-B0DC-AD10F1182925}"
+	ProjectSection(SolutionItems) = preProject
+		Тестовая документация\Test-cases.docx = Тестовая документация\Test-cases.docx
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
